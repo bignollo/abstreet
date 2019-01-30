@@ -9,17 +9,17 @@ use serde_derive::{Deserialize, Serialize};
 pub const EPSILON_SPEED: Speed = Speed::const_meters_per_second(0.000_000_01);
 
 // http://pccsc.net/bicycle-parking-info/ says 68 inches, which is 1.73m
-const MIN_BIKE_LENGTH: Distance = Distance::const_meters(1.7);
-const MAX_BIKE_LENGTH: Distance = Distance::const_meters(2.0);
+const MIN_BIKE_LENGTH: Distance = Distance::const_cm(170);
+const MAX_BIKE_LENGTH: Distance = Distance::const_cm(200);
 // These two must be < PARKING_SPOT_LENGTH
-pub const MIN_CAR_LENGTH: Distance = Distance::const_meters(4.5);
-const MAX_CAR_LENGTH: Distance = Distance::const_meters(6.5);
+pub const MIN_CAR_LENGTH: Distance = Distance::const_cm(450);
+const MAX_CAR_LENGTH: Distance = Distance::const_cm(650);
 // Note this is more than MAX_CAR_LENGTH
-const BUS_LENGTH: Distance = Distance::const_meters(12.5);
+const BUS_LENGTH: Distance = Distance::const_cm(1250);
 
 // At all speeds (including at rest), cars must be at least this far apart, measured from front of
 // one car to the back of the other.
-pub const FOLLOWING_DISTANCE: Distance = Distance::const_meters(1.0);
+pub const FOLLOWING_DISTANCE: Distance = Distance::const_cm(100);
 
 // TODO unit test all of this
 // TODO handle floating point issues uniformly here

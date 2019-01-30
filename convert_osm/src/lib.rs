@@ -12,7 +12,7 @@ use map_model::{raw_data, FindClosest, IntersectionType, LANE_THICKNESS};
 use std::path::Path;
 use structopt::StructOpt;
 
-const MAX_DIST_BTWN_INTERSECTION_AND_SIGNAL: Distance = Distance::const_meters(50.0);
+const MAX_DIST_BTWN_INTERSECTION_AND_SIGNAL: Distance = Distance::const_cm(5000);
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "convert_osm")]

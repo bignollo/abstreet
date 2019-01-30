@@ -40,7 +40,7 @@ pub use crate::turn::{Turn, TurnID, TurnPriority, TurnType};
 use abstutil::Cloneable;
 use geom::Distance;
 
-pub const LANE_THICKNESS: Distance = Distance::const_meters(2.5);
+pub const LANE_THICKNESS: Distance = Distance::const_cm(250);
 
 impl Cloneable for ControlTrafficSignal {}
 impl Cloneable for IntersectionID {}

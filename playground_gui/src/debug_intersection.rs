@@ -3,7 +3,7 @@ use ezgui::{Color, GfxCtx};
 use geom::{Distance, PolyLine, Pt2D};
 
 // Copied from map_model; no need to have to rebuild that crate
-const LANE_THICKNESS: Distance = Distance::const_meters(2.5);
+const LANE_THICKNESS: Distance = Distance::const_cm(250);
 
 #[allow(clippy::unreadable_literal)]
 pub fn run(g: &mut GfxCtx) {

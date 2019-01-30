@@ -27,15 +27,15 @@ use map_model::Map;
 use sim::{DrawCarInput, VehicleType};
 use std::f64;
 
-const PARCEL_BOUNDARY_THICKNESS: Distance = Distance::const_meters(0.5);
-const EXTRA_SHAPE_THICKNESS: Distance = Distance::const_meters(1.0);
-const EXTRA_SHAPE_POINT_RADIUS: Distance = Distance::const_meters(1.0);
+const PARCEL_BOUNDARY_THICKNESS: Distance = Distance::const_cm(50);
+const EXTRA_SHAPE_THICKNESS: Distance = Distance::const_cm(100);
+const EXTRA_SHAPE_POINT_RADIUS: Distance = Distance::const_cm(100);
 
-const BIG_ARROW_THICKNESS: Distance = Distance::const_meters(0.5);
+const BIG_ARROW_THICKNESS: Distance = Distance::const_cm(50);
 
-const TURN_ICON_ARROW_THICKNESS: Distance = Distance::const_meters(0.15);
-const TURN_ICON_ARROW_LENGTH: Distance = Distance::const_meters(2.0);
-pub const CROSSWALK_LINE_THICKNESS: Distance = Distance::const_meters(0.25);
+const TURN_ICON_ARROW_THICKNESS: Distance = Distance::const_cm(15);
+const TURN_ICON_ARROW_LENGTH: Distance = Distance::const_cm(200);
+pub const CROSSWALK_LINE_THICKNESS: Distance = Distance::const_cm(25);
 
 pub const MIN_ZOOM_FOR_MARKINGS: f64 = 5.0;
 

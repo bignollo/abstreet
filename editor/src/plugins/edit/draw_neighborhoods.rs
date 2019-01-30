@@ -4,7 +4,7 @@ use ezgui::{Color, GfxCtx, Key, Wizard, WrappedWizard};
 use geom::{Circle, Distance, Line, Polygon, Pt2D};
 use map_model::{Map, NeighborhoodBuilder};
 
-const POINT_RADIUS: Distance = Distance::const_meters(2.0);
+const POINT_RADIUS: Distance = Distance::const_cm(200);
 
 pub enum DrawNeighborhoodState {
     PickNeighborhood(Wizard),

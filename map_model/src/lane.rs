@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 
 // Bit longer than the longest car.
-pub const PARKING_SPOT_LENGTH: Distance = Distance::const_meters(8.0);
+pub const PARKING_SPOT_LENGTH: Distance = Distance::const_cm(800);
 
 // TODO reconsider pub usize. maybe outside world shouldnt know.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord, Serialize, Deserialize)]

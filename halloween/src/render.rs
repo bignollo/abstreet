@@ -12,7 +12,7 @@ const BUILDING: Color = Color::rgb_f(136.0 / 255.0, 30.0 / 255.0, 228.0 / 255.0)
 // dark orange / red
 const PATH: Color = Color::rgb_f(247.0 / 255.0, 95.0 / 255.0, 28.0 / 255.0);
 
-const LINE_WIDTH: Distance = Distance::const_meters(1.0);
+const LINE_WIDTH: Distance = Distance::const_cm(100);
 
 pub struct DrawMap {
     roads: Vec<DrawRoad>,

@@ -5,7 +5,7 @@ use geom::{Bounds, Circle, Distance, Line, Pt2D};
 use map_model::Map;
 use sim::{DrawPedestrianInput, PedestrianID};
 
-const RADIUS: Distance = Distance::const_meters(1.0);
+const RADIUS: Distance = Distance::const_cm(100);
 
 pub struct DrawPedestrian {
     pub id: PedestrianID,

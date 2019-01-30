@@ -6,7 +6,7 @@ use map_model::{Map, TurnType};
 use sim::{CarID, CarState, DrawCarInput, MIN_CAR_LENGTH};
 use std;
 
-const CAR_WIDTH: Distance = Distance::const_meters(2.0);
+const CAR_WIDTH: Distance = Distance::const_cm(200);
 
 pub struct DrawCar {
     pub id: CarID,

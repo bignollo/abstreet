@@ -8,9 +8,9 @@ use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::mem;
 
-const INTERSECTION_RADIUS: Distance = Distance::const_meters(5.0);
+const INTERSECTION_RADIUS: Distance = Distance::const_cm(500);
 const BUILDING_LENGTH: f64 = 30.0;
-const CENTER_LINE_THICKNESS: Distance = Distance::const_meters(0.5);
+const CENTER_LINE_THICKNESS: Distance = Distance::const_cm(50);
 
 const HIGHLIGHT_COLOR: Color = Color::CYAN;
 

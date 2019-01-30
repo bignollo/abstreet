@@ -4,7 +4,7 @@ use ezgui::{Color, GfxCtx};
 use geom::{Bounds, Distance, Polygon, Pt2D};
 use sim::{CarID, CarState, DrawCarInput};
 
-const BIKE_WIDTH: Distance = Distance::const_meters(0.8);
+const BIKE_WIDTH: Distance = Distance::const_cm(80);
 
 pub struct DrawBike {
     pub id: CarID,

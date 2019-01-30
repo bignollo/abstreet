@@ -4,7 +4,7 @@ use abstutil::wraparound_get;
 use geom::{Angle, Distance, HashablePt2D, Line, PolyLine, Pt2D};
 use std::collections::{BTreeMap, HashMap};
 
-const DEGENERATE_INTERSECTION_HALF_LENGTH: Distance = Distance::const_meters(5.0);
+const DEGENERATE_INTERSECTION_HALF_LENGTH: Distance = Distance::const_cm(500);
 
 // The polygon should exist entirely within the thick bands around all original roads -- it just
 // carves up part of that space, doesn't reach past it.
