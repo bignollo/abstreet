@@ -1,5 +1,5 @@
 use crate::runner::TestRunner;
-use geom::{Distance, Speed, EPSILON_DIST};
+use geom::{Distance, Speed};
 use sim::kinematics::{results_of_accel_for_one_tick, Vehicle, EPSILON_SPEED};
 use sim::Tick;
 
@@ -80,11 +80,11 @@ fn test_accel_to_stop_in_dist(vehicle: Vehicle, orig_dist_left: Distance, orig_s
         speed = new_speed;
         dist_left -= dist_covered;
 
-        if dist_left < -EPSILON_DIST {
+        if dist_left < Distance::ZERO {
             println!("  Result: speed {}, dist_left {}", speed, dist_left);
             panic!("We overshot too much!");
         }
-        if dist_left <= EPSILON_DIST {
+        if dist_left == Distance::ZERO {
             println!("  Result: speed {}, dist_left {}", speed, dist_left);
             if speed > EPSILON_SPEED {
                 panic!("Finished, but going too fast");

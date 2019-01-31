@@ -64,7 +64,8 @@ pub fn run(t: &mut TestRunner) {
 
     t.run_fast("trim_with_epsilon", |_| {
         /*
-        // EPSILON_DIST needs to be tuned correctly, or this point seems like it's not on the line.
+        // TODO Retry this one -- is the point on the line? Does it matter after the switch to
+        // coarser resolution?
         let mut pl = PolyLine::new(vec![
           Pt2D::new(1130.2653468611902, 2124.099702776818),
           Pt2D::new(1175.9652436108408, 2124.1094748373457),

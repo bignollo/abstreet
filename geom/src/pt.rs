@@ -28,6 +28,9 @@ impl Pt2D {
 
     // TODO This is a small first step...
     pub fn approx_eq(self, other: Pt2D, threshold: Distance) -> bool {
+        if threshold == Distance::const_cm(1) {
+            panic!("Don't use approx_eq for exact checks -- compare directly");
+        }
         self.dist_to(other) <= threshold
     }
 
@@ -97,10 +100,15 @@ impl Pt2D {
         )
     }
 
-    // TODO valid to do euclidean distance on world-space points that're formed from
-    // Haversine?
+    // Doesn't round yet.
+    pub(crate) fn raw_dist_to(self, to: Pt2D) -> f64 {
+        // TODO valid to do euclidean distance on world-space points that're formed from
+        // Haversine?
+        ((self.x() - to.x()).powi(2) + (self.y() - to.y()).powi(2)).sqrt()
+    }
+
     pub fn dist_to(self, to: Pt2D) -> Distance {
-        Distance::meters(((self.x() - to.x()).powi(2) + (self.y() - to.y()).powi(2)).sqrt())
+        Distance::meters(self.raw_dist_to(to))
     }
 
     pub fn angle_to(self, to: Pt2D) -> Angle {
@@ -123,7 +131,18 @@ impl Pt2D {
         Pt2D::new(x / len, y / len)
     }
 
-    // Temporary until Pt2D has proper resolution.
+    // TODO Once points have proper resolution, remove this. The one below is fine to keep; it's
+    // mean for bigger thresholds.
+    pub fn dedupe(pts: Vec<Pt2D>) -> Vec<Pt2D> {
+        let mut result: Vec<Pt2D> = Vec::new();
+        for pt in pts {
+            if result.is_empty() || result.last().unwrap().dist_to(pt) > Distance::ZERO {
+                result.push(pt);
+            }
+        }
+        result
+    }
+
     pub fn approx_dedupe(pts: Vec<Pt2D>, threshold: Distance) -> Vec<Pt2D> {
         let mut result: Vec<Pt2D> = Vec::new();
         for pt in pts {

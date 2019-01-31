@@ -11,7 +11,7 @@ use crate::{
 };
 use abstutil;
 use abstutil::{deserialize_btreemap, serialize_btreemap, Error};
-use geom::{Acceleration, Distance, Duration, Speed, EPSILON_DIST};
+use geom::{Acceleration, Distance, Duration, Speed};
 use map_model::{
     BuildingID, IntersectionID, LaneID, Map, Path, PathStep, Position, Trace, Traversable, TurnID,
     LANE_THICKNESS,
@@ -299,19 +299,7 @@ impl Car {
             }
 
             let leftover_dist = self.dist_along - self.on.length(map);
-            if leftover_dist < Distance::ZERO {
-                break;
-            }
-
-            // If we stop right at the end of a turn, we want to wind up at the start of the next
-            // lane. Otherwise trying to park right at 0m along a lane gets stuck at the end of the
-            // turn.
-            // But if we stop right at the end of a lane, we want to stay there and not enter the
-            // intersection.
-            if leftover_dist <= EPSILON_DIST && self.on.maybe_lane().is_some() {
-                // But do force them to be right at the end of the lane, otherwise we're in this
-                // bizarre, illegal state where dist_along is > the current Traversable's length.
-                self.dist_along = self.on.length(map);
+            if leftover_dist <= Distance::ZERO {
                 break;
             }
 
@@ -916,7 +904,7 @@ impl DrivingSimState {
     }
 
     pub fn trace_route(&self, id: CarID, map: &Map, dist_ahead: Distance) -> Option<Trace> {
-        if dist_ahead <= EPSILON_DIST {
+        if dist_ahead <= Distance::ZERO {
             return None;
         }
         let r = self.routers.get(&id)?;

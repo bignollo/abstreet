@@ -15,6 +15,3 @@ pub use crate::polygon::{Polygon, Triangle};
 pub use crate::polyline::PolyLine;
 pub use crate::pt::{Bounds, HashablePt2D, Pt2D};
 pub use crate::units::{Acceleration, Distance, Duration, Speed};
-
-// About 0.4 inches... which is quite tiny on the scale of things. :)
-pub const EPSILON_DIST: Distance = Distance::const_cm(1);

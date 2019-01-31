@@ -1,4 +1,4 @@
-use crate::{Angle, Distance, PolyLine, Polygon, Pt2D, EPSILON_DIST};
+use crate::{Angle, Distance, PolyLine, Polygon, Pt2D};
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 
@@ -8,9 +8,8 @@ pub struct Line(Pt2D, Pt2D);
 
 impl Line {
     pub fn new(pt1: Pt2D, pt2: Pt2D) -> Line {
-        let len = pt1.dist_to(pt2);
-        if len < EPSILON_DIST {
-            panic!("Tiny line with length {}", len);
+        if pt1.dist_to(pt2) == Distance::ZERO {
+            panic!("Zero-length line segment");
         }
         Line(pt1, pt2)
     }
@@ -143,12 +142,8 @@ impl Line {
 
     pub fn dist_along(&self, dist: Distance) -> Pt2D {
         let len = self.length();
-        if dist > len + EPSILON_DIST {
+        if dist > len {
             panic!("cant do {} along a line of length {}", dist, len);
-        }
-        if len < EPSILON_DIST {
-            // dist is also tiny because of the check above.
-            return self.pt1();
         }
 
         let percent = dist / len;
@@ -156,13 +151,6 @@ impl Line {
             self.pt1().x() + percent * (self.pt2().x() - self.pt1().x()),
             self.pt1().y() + percent * (self.pt2().y() - self.pt1().y()),
         )
-        // TODO unit test
-        /*
-        let res_len = euclid_dist((pt1, &Pt2D::new(res[0], res[1])));
-        if res_len != dist_along {
-            println!("whats the delta btwn {} and {}?", res_len, dist_along);
-        }
-        */
     }
 
     pub fn unbounded_dist_along(&self, dist: Distance) -> Pt2D {
@@ -172,13 +160,6 @@ impl Line {
             self.pt1().x() + percent * (self.pt2().x() - self.pt1().x()),
             self.pt1().y() + percent * (self.pt2().y() - self.pt1().y()),
         )
-        // TODO unit test
-        /*
-        let res_len = euclid_dist((pt1, &Pt2D::new(res[0], res[1])));
-        if res_len != dist_along {
-            println!("whats the delta btwn {} and {}?", res_len, dist_along);
-        }
-        */
     }
 
     pub fn contains_pt(&self, pt: Pt2D) -> bool {
@@ -186,10 +167,12 @@ impl Line {
     }
 
     pub fn dist_along_of_point(&self, pt: Pt2D) -> Option<Distance> {
-        let dist1 = self.pt1().dist_to(pt);
-        let dist2 = pt.dist_to(self.pt2());
-        if (dist1 + dist2 - self.length()).abs() < EPSILON_DIST {
-            Some(dist1)
+        // Don't round until the end.
+        let dist1 = self.pt1().raw_dist_to(pt);
+        let dist2 = pt.raw_dist_to(self.pt2());
+        let length = self.pt1().raw_dist_to(self.pt2());
+        if (dist1 + dist2 - length).abs() < Distance::EPSILON_METERS {
+            Some(Distance::meters(dist1))
         } else {
             None
         }
@@ -217,26 +200,25 @@ impl InfiniteLine {
     // https://stackoverflow.com/a/565282 by way of
     // https://github.com/ucarion/line_intersection/blob/master/src/lib.rs
     pub fn intersection(&self, other: &InfiniteLine) -> Option<Pt2D> {
-        fn cross(a: Pt2D, b: Pt2D) -> f64 {
-            a.x() * b.y() - a.y() * b.x()
+        // Don't do any rounding until the end.
+        fn cross(a: (f64, f64), b: (f64, f64)) -> f64 {
+            a.0 * b.1 - a.1 * b.0
         }
 
         let p = self.0;
         let q = other.0;
-        let r = Pt2D::new(self.1.x() - self.0.x(), self.1.y() - self.0.y());
-        let s = Pt2D::new(other.1.x() - other.0.x(), other.1.y() - other.0.y());
+        let r = (self.1.x() - self.0.x(), self.1.y() - self.0.y());
+        let s = (other.1.x() - other.0.x(), other.1.y() - other.0.y());
 
         let r_cross_s = cross(r, s);
-        let q_minus_p = Pt2D::new(q.x() - p.x(), q.y() - p.y());
-        //let q_minus_p_cross_r = cross(q_minus_p, r);
+        let q_minus_p = (q.x() - p.x(), q.y() - p.y());
 
         if r_cross_s == 0.0 {
             // Parallel
             None
         } else {
-            let t = cross(q_minus_p, Pt2D::new(s.x() / r_cross_s, s.y() / r_cross_s));
-            //let u = cross(q_minus_p, Pt2D::new(r.x() / r_cross_s, r.y() / r_cross_s));
-            Some(Pt2D::new(p.x() + t * r.x(), p.y() + t * r.y()))
+            let t = cross(q_minus_p, (s.0 / r_cross_s, s.1 / r_cross_s));
+            Some(Pt2D::new(p.x() + t * r.0, p.y() + t * r.1))
         }
     }
 }

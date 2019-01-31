@@ -1,5 +1,5 @@
 use crate::{BusRouteID, BusStopID, LaneID, LaneType, Map, Position, Traversable, TurnID};
-use geom::{Distance, PolyLine, Pt2D, EPSILON_DIST};
+use geom::{Distance, PolyLine, Pt2D};
 use ordered_float::NotNan;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BinaryHeap, HashMap, VecDeque};
@@ -205,7 +205,7 @@ impl Path {
                 PathStep::ContraflowLane(l) => map.get_l(l).lane_center_pts.reversed().length(),
                 _ => Distance::ZERO,
             };
-            if dist_remaining - start_dist_this_step > EPSILON_DIST {
+            if dist_remaining > start_dist_this_step {
                 if let Some((new_pts, dist)) =
                     self.steps[i].slice(map, start_dist_this_step, dist_remaining)
                 {

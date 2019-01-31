@@ -1,6 +1,6 @@
 use crate::{CarID, TIMESTEP};
 use abstutil::Error;
-use geom::{Acceleration, Distance, Duration, Speed, EPSILON_DIST};
+use geom::{Acceleration, Distance, Duration, Speed};
 use more_asserts::assert_ge;
 use rand::Rng;
 use rand_xorshift::XorShiftRng;
@@ -142,15 +142,14 @@ impl Vehicle {
         speed: Speed,
         dist: Distance,
     ) -> Result<Acceleration, Error> {
-        if dist < -EPSILON_DIST {
+        if dist < Distance::ZERO {
             return Err(Error::new(format!(
                 "{} called accel_to_stop_in_dist({}, {}) with negative distance",
                 self.id, speed, dist
             )));
         }
 
-        // Don't NaN out. Don't check for <= EPSILON_DIST here -- it makes cars slightly overshoot
-        // sometimes.
+        // Don't NaN out.
         if dist <= Distance::ZERO {
             // TODO assert speed is 0ish?
             return Ok(Acceleration::ZERO);
@@ -180,7 +179,7 @@ impl Vehicle {
         // absurd amount of time to finish, with tiny little steps. But need to tune and understand
         // this value better. Higher initial speeds or slower max_deaccel's mean this is naturally
         // going to take longer. We don't want to start stopping now if we can't undo it next tick.
-        if !required_time.is_nan() && Duration::seconds(required_time) < Duration::seconds(15.0) {
+        if required_time.is_finite() && Duration::seconds(required_time) < Duration::seconds(15.0) {
             return Ok(normal_case);
         }
 

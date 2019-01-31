@@ -150,9 +150,6 @@ pub fn make_half_map(
     for t in half_map.turns.values_mut() {
         t.lookup_idx = half_map.turn_lookup.len();
         half_map.turn_lookup.push(t.id);
-        if t.geom.length() < geom::EPSILON_DIST {
-            warn!("u{} is a very short turn", t.lookup_idx);
-        }
     }
 
     make::make_all_buildings(

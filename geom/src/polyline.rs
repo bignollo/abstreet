@@ -1,6 +1,4 @@
-use crate::{
-    Angle, Bounds, Distance, HashablePt2D, InfiniteLine, Line, Polygon, Pt2D, EPSILON_DIST,
-};
+use crate::{Angle, Bounds, Distance, HashablePt2D, InfiniteLine, Line, Polygon, Pt2D};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fmt;
@@ -16,28 +14,16 @@ pub struct PolyLine {
 impl PolyLine {
     pub fn new(pts: Vec<Pt2D>) -> PolyLine {
         assert!(pts.len() >= 2);
-        // This checks no lines are too small. Could take the other approach and automatically
-        // squish down points here and make sure the final result is at least EPSILON_DIST.
-        // But probably better for the callers to do this -- they have better understanding of what
-        // needs to be squished down, why, and how.
-        if pts
-            .windows(2)
-            .any(|pair| pair[0].approx_eq(pair[1], EPSILON_DIST))
-        {
-            let length = pts.windows(2).fold(Distance::ZERO, |so_far, pair| {
-                so_far + pair[0].dist_to(pair[1])
-            });
-            panic!(
-                "PL with total length {} and {} pts has ~dupe pts: {:?}",
-                length,
-                pts.len(),
-                pts
-            );
+        // We could automatically dedupe points here, but it's better for callers to deal with the
+        // corner cases that come up.
+        let mut length = Distance::ZERO;
+        for pair in pts.windows(2) {
+            let len = pair[0].dist_to(pair[1]);
+            if len == Distance::ZERO {
+                panic!("PL with {} pts has duplicate pairs: {:?}", pts.len(), pts);
+            }
+            length += len;
         }
-
-        let length = pts.windows(2).fold(Distance::ZERO, |so_far, pair| {
-            so_far + Line::new(pair[0], pair[1]).length()
-        });
 
         // Can't have duplicates! If the polyline ever crosses back on itself, all sorts of things
         // are broken.
@@ -101,11 +87,11 @@ impl PolyLine {
     // Returns the excess distance left over from the end. None if the result would be too squished
     // together.
     pub fn slice(&self, start: Distance, end: Distance) -> Option<(PolyLine, Distance)> {
-        if start >= end || start < Distance::ZERO || end < Distance::ZERO {
-            panic!("Can't get a polyline slice [{}, {}]", start, end);
-        }
-        if end - start < EPSILON_DIST {
+        if start == end {
             return None;
+        }
+        if start > end || start < Distance::ZERO || end < Distance::ZERO {
+            panic!("Can't get a polyline slice [{}, {}]", start, end);
         }
 
         let mut result: Vec<Pt2D> = Vec::new();
@@ -122,7 +108,7 @@ impl PolyLine {
             // Does this line contain the last point of the slice?
             if dist_so_far + length >= end {
                 let last_pt = line.dist_along(end - dist_so_far);
-                if result.last().unwrap().approx_eq(last_pt, EPSILON_DIST) {
+                if *result.last().unwrap() == last_pt {
                     result.pop();
                 }
                 result.push(last_pt);
@@ -131,7 +117,7 @@ impl PolyLine {
 
             // If we're in the middle, just collect the endpoint. But not if it's too close to the
             // previous point (namely, the start, which could be somewhere far along a line)
-            if !result.is_empty() && !result.last().unwrap().approx_eq(line.pt2(), EPSILON_DIST) {
+            if !result.is_empty() && *result.last().unwrap() != line.pt2() {
                 result.push(line.pt2());
             }
 
@@ -165,15 +151,10 @@ impl PolyLine {
 
         let mut dist_left = dist_along;
         let mut length_remeasured = Distance::ZERO;
-        for (idx, l) in self.lines().iter().enumerate() {
+        for l in self.lines() {
             let length = l.length();
             length_remeasured += length;
-            let epsilon = if idx == self.pts.len() - 2 {
-                EPSILON_DIST
-            } else {
-                Distance::ZERO
-            };
-            if dist_left <= length + epsilon {
+            if dist_left <= length {
                 return Some((l.dist_along(dist_left), l.angle()));
             }
             dist_left -= length;
@@ -233,10 +214,7 @@ impl PolyLine {
     // - the length before and after probably don't match up
     // - the number of points will match
     fn shift_with_corrections(&self, width: Distance) -> PolyLine {
-        let result = PolyLine::new(Pt2D::approx_dedupe(
-            self.shift_with_sharp_angles(width),
-            EPSILON_DIST,
-        ));
+        let result = PolyLine::new(Pt2D::dedupe(self.shift_with_sharp_angles(width)));
         let fixed = if result.pts.len() == self.pts.len() {
             fix_angles(self, result)
         } else {
@@ -388,7 +366,7 @@ impl PolyLine {
             let mut pts = self.pts.clone();
             pts.split_off(idx + 1);
             // Make sure the last line isn't too tiny
-            if pts.last().unwrap().approx_eq(pt, EPSILON_DIST) {
+            if *pts.last().unwrap() == pt {
                 pts.pop();
             }
             pts.push(pt);

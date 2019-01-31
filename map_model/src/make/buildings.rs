@@ -19,12 +19,11 @@ pub fn make_all_buildings(
     timer.start_iter("get building center points", input.len());
     for b in input {
         timer.next();
-        let pts = Pt2D::approx_dedupe(
+        let pts = Pt2D::dedupe(
             b.points
                 .iter()
                 .map(|coord| Pt2D::from_gps(*coord, gps_bounds).unwrap())
                 .collect(),
-            geom::EPSILON_DIST,
         );
         let center: HashablePt2D = Pt2D::center(&pts).into();
         pts_per_bldg.push(pts);
@@ -75,7 +74,7 @@ fn trim_front_path(bldg_points: &Vec<Pt2D>, path: Line) -> Line {
     for bldg_line in bldg_points.windows(2) {
         let l = Line::new(bldg_line[0], bldg_line[1]);
         if let Some(hit) = l.intersection(&path) {
-            if !hit.approx_eq(path.pt2(), geom::EPSILON_DIST) {
+            if hit != path.pt2() {
                 return Line::new(hit, path.pt2());
             }
         }
