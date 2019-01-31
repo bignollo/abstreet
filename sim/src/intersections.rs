@@ -1,14 +1,13 @@
-use crate::kinematics;
 use crate::view::WorldView;
 use crate::{AgentID, CarID, Event, PedestrianID, Tick};
 use abstutil;
 use abstutil::{deserialize_btreemap, serialize_btreemap, Error};
-use geom::Duration;
+use geom::{Duration, Speed};
 use map_model::{ControlStopSign, IntersectionID, IntersectionType, Map, TurnID, TurnPriority};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 
-const WAIT_AT_STOP_SIGN: Duration = Duration::const_seconds(1.5);
+const WAIT_AT_STOP_SIGN: Duration = Duration::const_ms(1_500);
 
 // One agent may make several requests at one intersection at a time. This is normal for
 // pedestrians and crosswalks. IntersectionPolicies should expect this.
@@ -257,7 +256,7 @@ impl StopSign {
             let should_promote = if ss.get_priority(req.turn) == TurnPriority::Stop {
                 // TODO and the agent is at the end? maybe easier than looking at their speed
                 // TODO with lane-changing, somebody could cut in front of them when they're stopped.
-                view.get_speed(req.agent) <= kinematics::EPSILON_SPEED
+                view.get_speed(req.agent) == Speed::ZERO
             } else {
                 true
             };

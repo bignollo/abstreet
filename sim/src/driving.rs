@@ -21,7 +21,7 @@ use rand_xorshift::XorShiftRng;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 
-const TIME_TO_PARK_OR_DEPART: Duration = Duration::const_seconds(10.0);
+const TIME_TO_PARK_OR_DEPART: Duration = Duration::const_ms(10_000);
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DrivingGoal {
@@ -81,7 +81,7 @@ impl Car {
     ) -> Result<Action, Error> {
         if self.parking.is_some() {
             // TODO right place for this check?
-            assert!(self.speed <= kinematics::EPSILON_SPEED);
+            assert!(self.speed == Speed::ZERO);
             return Ok(Action::WorkOnParking);
         }
 
@@ -495,7 +495,7 @@ impl DrivingSimState {
         let waiting = self
             .cars
             .values()
-            .filter(|c| c.speed <= kinematics::EPSILON_SPEED)
+            .filter(|c| c.speed == Speed::ZERO)
             .count();
         (waiting, self.cars.len())
     }
@@ -862,7 +862,7 @@ impl DrivingSimState {
             ),
             state: if c.debug {
                 CarState::Debug
-            } else if c.speed > kinematics::EPSILON_SPEED {
+            } else if c.speed > Speed::ZERO {
                 CarState::Moving
             } else {
                 CarState::Stuck
@@ -932,7 +932,7 @@ impl DrivingSimState {
             if let Some(queue) = self.queues.get(&Traversable::Lane(*l)) {
                 for (_, car) in &queue.cars_queue {
                     let c = &self.cars[car];
-                    if c.speed <= kinematics::EPSILON_SPEED {
+                    if c.speed == Speed::ZERO {
                         stuck_cars += 1;
                     } else {
                         moving_cars += 1;

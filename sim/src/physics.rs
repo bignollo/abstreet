@@ -5,7 +5,7 @@ use rand_xorshift::XorShiftRng;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 
-pub const TIMESTEP: Duration = Duration::const_seconds(0.1);
+pub const TIMESTEP: Duration = Duration::const_ms(100);
 
 // Represents a moment in time, not a duration/delta
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord, Serialize, Deserialize)]

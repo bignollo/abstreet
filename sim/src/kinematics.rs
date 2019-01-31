@@ -6,8 +6,6 @@ use rand::Rng;
 use rand_xorshift::XorShiftRng;
 use serde_derive::{Deserialize, Serialize};
 
-pub const EPSILON_SPEED: Speed = Speed::const_meters_per_second(0.000_000_01);
-
 // http://pccsc.net/bicycle-parking-info/ says 68 inches, which is 1.73m
 const MIN_BIKE_LENGTH: Distance = Distance::const_cm(170);
 const MAX_BIKE_LENGTH: Distance = Distance::const_cm(200);
@@ -22,7 +20,6 @@ const BUS_LENGTH: Distance = Distance::const_cm(1250);
 pub const FOLLOWING_DISTANCE: Distance = Distance::const_cm(100);
 
 // TODO unit test all of this
-// TODO handle floating point issues uniformly here
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Vehicle {
@@ -160,18 +157,16 @@ impl Vehicle {
         // Eliminating time yields the formula for accel below. This same accel should be applied
         // for t = -v_1 / a, which is possible even if that's not a multiple of TIMESTEP since
         // we're decelerating to rest.
-        let normal_case = Acceleration::meters_per_second_squared(
+        let normal_case_accel =
             (-1.0 * speed.inner_meters_per_second() * speed.inner_meters_per_second())
-                / (2.0 * dist.inner_meters()),
-        );
+                / (2.0 * dist.inner_meters());
         // TODO might validlyish be NaN, so just f64 here
-        let required_time =
-            -1.0 * speed.inner_meters_per_second() / normal_case.inner_meters_per_second_squared();
+        let required_time = -1.0 * speed.inner_meters_per_second() / normal_case_accel;
 
         if self.debug {
             debug!(
                 "   accel_to_stop_in_dist({}, {}) would normally recommend {} and take {}s to finish",
-                speed, dist, normal_case, required_time
+                speed, dist, Acceleration::meters_per_second_squared(normal_case_accel), Duration::seconds(required_time)
             );
         }
 
@@ -180,7 +175,7 @@ impl Vehicle {
         // this value better. Higher initial speeds or slower max_deaccel's mean this is naturally
         // going to take longer. We don't want to start stopping now if we can't undo it next tick.
         if required_time.is_finite() && Duration::seconds(required_time) < Duration::seconds(15.0) {
-            return Ok(normal_case);
+            return Ok(Acceleration::meters_per_second_squared(normal_case_accel));
         }
 
         // We have to accelerate so that we can get going, but not enough so that we can't stop. Do
@@ -270,18 +265,21 @@ fn dist_at_constant_accel(
         )));
     }
 
+    // Raw calculations.
+    let raw_accel = accel.inner_meters_per_second_squared();
+    let raw_time = time.inner_seconds();
+    let raw_initial_speed = initial_speed.inner_meters_per_second();
+
     // Don't deaccelerate into going backwards, just cap things off.
     let actual_time = if accel >= Acceleration::ZERO {
-        time
+        raw_time
     } else {
         // 0 = v_0 + a*t
-        time.min(initial_speed / accel * -1.0)
+        raw_time.min(-raw_initial_speed / raw_accel)
     };
-    let dist = (initial_speed * actual_time)
-        + Distance::meters(
-            0.5 * accel.inner_meters_per_second_squared()
-                * (actual_time.inner_seconds() * actual_time.inner_seconds()),
-        );
+    let dist = Distance::meters(
+        (raw_initial_speed * actual_time) + 0.5 * raw_accel * (actual_time * actual_time),
+    );
     if dist < Distance::ZERO {
         return Err(Error::new(format!(
             "dist_at_constant_accel yielded result = {}",
@@ -295,31 +293,33 @@ pub fn results_of_accel_for_one_tick(
     initial_speed: Speed,
     accel: Acceleration,
 ) -> (Distance, Speed) {
+    // Raw calculations here.
+    let raw_initial_speed = initial_speed.inner_meters_per_second();
+    let raw_accel = accel.inner_meters_per_second_squared();
+    let raw_timestep = TIMESTEP.inner_seconds();
+
     // Don't deaccelerate into going backwards, just cap things off.
     let actual_time = if accel >= Acceleration::ZERO {
-        TIMESTEP
+        raw_timestep
     } else {
-        TIMESTEP.min(initial_speed / accel * -1.0)
+        raw_timestep.min(-raw_initial_speed / raw_accel)
     };
-    let dist = (initial_speed * actual_time)
-        + Distance::meters(
-            0.5 * accel.inner_meters_per_second_squared()
-                * (actual_time.inner_seconds() * actual_time.inner_seconds()),
-        );
+    let dist = Distance::meters(
+        (raw_initial_speed * actual_time) + 0.5 * raw_accel * (actual_time * actual_time),
+    );
+    let new_speed = Speed::meters_per_second(raw_initial_speed + (raw_accel * actual_time));
     assert_ge!(dist, Distance::ZERO);
-    let mut new_speed = initial_speed + (accel * actual_time);
-    // Handle some floating point imprecision
-    if new_speed < Speed::ZERO && new_speed >= EPSILON_SPEED * -1.0 {
-        new_speed = Speed::ZERO;
-    }
     assert_ge!(new_speed, Speed::ZERO);
     (dist, new_speed)
 }
 
 fn accel_to_cover_dist_in_one_tick(dist: Distance, speed: Speed) -> Acceleration {
+    let raw_dist = dist.inner_meters();
+    let raw_speed = speed.inner_meters_per_second();
+    let raw_timestep = TIMESTEP.inner_seconds();
+
     // d = (v_i)(t) + (1/2)(a)(t^2), solved for a
     Acceleration::meters_per_second_squared(
-        2.0 * (dist - (speed * TIMESTEP)).inner_meters()
-            / (TIMESTEP.inner_seconds() * TIMESTEP.inner_seconds()),
+        2.0 * (raw_dist - (raw_speed * raw_timestep)) / (raw_timestep * raw_timestep),
     )
 }

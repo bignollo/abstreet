@@ -124,23 +124,23 @@ impl ops::Div<f64> for Distance {
     }
 }
 
-// In seconds. Can be negative.
+// Millisecond resolution. Can be negative.
 // TODO Naming is awkward. Can represent a moment in time or a duration.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct Duration(f64);
+pub struct Duration(i32);
 
 impl Duration {
-    pub const ZERO: Duration = Duration::const_seconds(0.0);
+    pub const ZERO: Duration = Duration::const_ms(0);
 
     pub fn seconds(value: f64) -> Duration {
         if !value.is_finite() {
             panic!("Bad Duration {}", value);
         }
 
-        Duration(value)
+        Duration((value * 1000.0).round() as i32)
     }
 
-    pub const fn const_seconds(value: f64) -> Duration {
+    pub const fn const_ms(value: i32) -> Duration {
         Duration(value)
     }
 
@@ -154,13 +154,13 @@ impl Duration {
 
     // TODO Remove if possible.
     pub fn inner_seconds(self) -> f64 {
-        self.0
+        f64::from(self.0) / 1000.0
     }
 }
 
 impl fmt::Display for Duration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}s", self.0)
+        write!(f, "{}s", self.inner_seconds())
     }
 }
 
@@ -168,15 +168,15 @@ impl ops::Sub for Duration {
     type Output = Duration;
 
     fn sub(self, other: Duration) -> Duration {
-        Duration::seconds(self.0 - other.0)
+        Duration(self.0.checked_sub(other.0).unwrap())
     }
 }
 
 impl ops::Mul<f64> for Duration {
     type Output = Duration;
 
-    fn mul(self, other: f64) -> Duration {
-        Duration::seconds(self.0 * other)
+    fn mul(self, scalar: f64) -> Duration {
+        Duration::seconds(self.inner_seconds() * scalar)
     }
 }
 
@@ -184,7 +184,7 @@ impl ops::Mul<Speed> for Duration {
     type Output = Distance;
 
     fn mul(self, other: Speed) -> Distance {
-        Distance::meters(self.0 * other.0)
+        Distance::meters(self.inner_seconds() * other.inner_meters_per_second())
     }
 }
 
@@ -192,29 +192,30 @@ impl ops::Div<Duration> for Duration {
     type Output = f64;
 
     fn div(self, other: Duration) -> f64 {
-        if other.0 == 0.0 {
+        if other == Duration::ZERO {
             panic!("Can't divide {} / {}", self, other);
         }
-        self.0 / other.0
+        self.inner_seconds() / other.inner_seconds()
     }
 }
 
-// In meters per second. Can be negative.
+// In 10^-4 meters per second. Can be negative.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct Speed(f64);
+pub struct Speed(i32);
 
 impl Speed {
-    pub const ZERO: Speed = Speed::const_meters_per_second(0.0);
+    pub const ZERO: Speed = Speed::const_sorta_meters_per_second(0);
 
     pub fn meters_per_second(value: f64) -> Speed {
         if !value.is_finite() {
             panic!("Bad Speed {}", value);
         }
 
-        Speed(value)
+        Speed((value * 10_000.0).round() as i32)
     }
 
-    pub const fn const_meters_per_second(value: f64) -> Speed {
+    // TODO Funky name. Meters per second, but multiply by 10^4.
+    pub const fn const_sorta_meters_per_second(value: i32) -> Speed {
         Speed(value)
     }
 
@@ -224,7 +225,7 @@ impl Speed {
 
     // TODO Remove if possible.
     pub fn inner_meters_per_second(self) -> f64 {
-        self.0
+        f64::from(self.0) / 10_000.0
     }
 }
 
@@ -232,7 +233,7 @@ impl ops::Add for Speed {
     type Output = Speed;
 
     fn add(self, other: Speed) -> Speed {
-        Speed::meters_per_second(self.0 + other.0)
+        Speed(self.0.checked_add(other.0).unwrap())
     }
 }
 
@@ -240,7 +241,7 @@ impl ops::Sub for Speed {
     type Output = Speed;
 
     fn sub(self, other: Speed) -> Speed {
-        Speed::meters_per_second(self.0 - other.0)
+        Speed(self.0.checked_sub(other.0).unwrap())
     }
 }
 
@@ -248,7 +249,7 @@ impl ops::Mul<f64> for Speed {
     type Output = Speed;
 
     fn mul(self, scalar: f64) -> Speed {
-        Speed::meters_per_second(self.0 * scalar)
+        Speed::meters_per_second(self.inner_meters_per_second() * scalar)
     }
 }
 
@@ -256,7 +257,7 @@ impl ops::Mul<Duration> for Speed {
     type Output = Distance;
 
     fn mul(self, other: Duration) -> Distance {
-        Distance::meters(self.0 * other.0)
+        Distance::meters(self.inner_meters_per_second() * other.inner_seconds())
     }
 }
 
@@ -267,7 +268,9 @@ impl ops::Div<Duration> for Speed {
         if other == Duration::ZERO {
             panic!("Can't divide {} / {}", self, other);
         }
-        Acceleration::meters_per_second_squared(self.0 / other.0)
+        Acceleration::meters_per_second_squared(
+            self.inner_meters_per_second() / other.inner_seconds(),
+        )
     }
 }
 
@@ -278,38 +281,34 @@ impl ops::Div<Acceleration> for Speed {
         if other == Acceleration::ZERO {
             panic!("Can't divide {} / {}", self, other);
         }
-        Duration::seconds(self.0 / other.0)
+        Duration::seconds(self.inner_meters_per_second() / other.inner_meters_per_second_squared())
     }
 }
 
 impl fmt::Display for Speed {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}m/s", self.0)
+        write!(f, "{}m/s", self.inner_meters_per_second())
     }
 }
 
-// In meters per second^2. Can be negative.
+// In 10^-4 meters per second^2. Can be negative.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct Acceleration(f64);
+pub struct Acceleration(i32);
 
 impl Acceleration {
-    pub const ZERO: Acceleration = Acceleration::const_meters_per_second_squared(0.0);
+    pub const ZERO: Acceleration = Acceleration(0);
 
     pub fn meters_per_second_squared(value: f64) -> Acceleration {
         if !value.is_finite() {
             panic!("Bad Acceleration {}", value);
         }
 
-        Acceleration(value)
-    }
-
-    pub const fn const_meters_per_second_squared(value: f64) -> Acceleration {
-        Acceleration(value)
+        Acceleration((value * 10_000.0).round() as i32)
     }
 
     // TODO Remove by making Acceleration itself Ord.
     pub fn as_ordered(self) -> NotNan<f64> {
-        NotNan::new(self.0).unwrap()
+        NotNan::new(self.inner_meters_per_second_squared()).unwrap()
     }
 
     pub fn min(self, other: Acceleration) -> Acceleration {
@@ -322,13 +321,13 @@ impl Acceleration {
 
     // TODO Remove if possible.
     pub fn inner_meters_per_second_squared(self) -> f64 {
-        self.0
+        f64::from(self.0) / 10_000.0
     }
 }
 
 impl fmt::Display for Acceleration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}m/s^2", self.0)
+        write!(f, "{}m/s^2", self.inner_meters_per_second_squared())
     }
 }
 
@@ -336,6 +335,6 @@ impl ops::Mul<Duration> for Acceleration {
     type Output = Speed;
 
     fn mul(self, other: Duration) -> Speed {
-        Speed::meters_per_second(self.0 * other.0)
+        Speed::meters_per_second(self.inner_meters_per_second_squared() * other.inner_seconds())
     }
 }

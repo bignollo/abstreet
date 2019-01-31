@@ -4,7 +4,9 @@
 
 - try fixed pt again, for determinism purposes mostly
 	- get things working
-		- change duration, speed, accel too?
+		- maybe dont even need the dist/speed/accel/duration relations... do stuff raw?
+		- accept slight overshoot?
+		- or go back to trimmed f64 version, run all tests.
 
 	- clean up
 		- make stuff natively orderable

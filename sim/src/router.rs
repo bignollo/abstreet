@@ -1,11 +1,10 @@
 use crate::driving::Action;
-use crate::kinematics;
 use crate::kinematics::Vehicle;
 use crate::parking::ParkingSimState;
 use crate::transit::TransitSimState;
 use crate::view::AgentView;
 use crate::{Event, ParkingSpot, Tick};
-use geom::{Acceleration, Distance};
+use geom::{Acceleration, Distance, Speed};
 use map_model::{
     BuildingID, LaneID, LaneType, Map, Path, PathStep, Position, Trace, Traversable, TurnID,
 };
@@ -78,7 +77,7 @@ impl Router {
         transit_sim: &mut TransitSimState,
         rng: &mut XorShiftRng,
     ) -> Option<Action> {
-        if self.path.isnt_last_step() || view.speed > kinematics::EPSILON_SPEED {
+        if self.path.isnt_last_step() || view.speed > Speed::ZERO {
             return None;
         }
 

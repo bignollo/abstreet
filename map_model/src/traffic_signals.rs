@@ -4,7 +4,7 @@ use geom::Duration;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
-const CYCLE_DURATION: Duration = Duration::const_seconds(30.0);
+const CYCLE_DURATION: Duration = Duration::const_ms(30_000);
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ControlTrafficSignal {

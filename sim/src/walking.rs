@@ -22,9 +22,10 @@ use std::collections::{BTreeMap, HashSet};
 // TODO tune these!
 // TODO make it vary, after we can easily serialize these
 // TODO temporarily very high to debug peds faster
-const SPEED: Speed = Speed::const_meters_per_second(3.9);
+// 3.9 m/s * 10^4
+const SPEED: Speed = Speed::const_sorta_meters_per_second(39_000);
 
-const TIME_TO_PREPARE_BIKE: Duration = Duration::const_seconds(15.0);
+const TIME_TO_PREPARE_BIKE: Duration = Duration::const_ms(15_000);
 
 // A pedestrian can start from a parking spot (after driving and parking) or at a building.
 // A pedestrian can end at a parking spot (to start driving) or at a building.
